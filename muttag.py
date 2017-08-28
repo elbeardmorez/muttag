@@ -120,9 +120,9 @@ try:
             f.write(u'=' * len(header) + u'\n')
             f.write(header.decode('utf-8') + u'\n')
             f.write(u'=' * len(header) + u'\n')
-            options.verbosity and log(u'#' * (len(header)))
+            options.verbosity and log(u'=' * (len(header)))
             options.verbosity and log(header.decode('utf-8'))
-            options.verbosity and log(u'#' * (len(header)))
+            options.verbosity and log(u'=' * (len(header)))
             for file in sorted(files):
               if file.endswith(options.extensions):
                 if process(os.path.join(root, file.decode('utf-8')), f):
