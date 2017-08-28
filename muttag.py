@@ -26,10 +26,9 @@ def info(file):
   try:
     if re.match(".*mp3$", file):
       info = mp3.MP3(file)
-      s = info.pprint()
     elif re.match(".*ogg$", file):
       info = oggvorbis.OggVorbis(file)
-      s = info.pprint()
+    s = info.pprint() if options.verbosity > 1 else info.info.pprint()
   except: pass
   finally: f.close()
   return s
