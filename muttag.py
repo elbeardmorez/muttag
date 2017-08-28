@@ -39,8 +39,8 @@ def process(file, output):
   s = info(file)
   if s and s != "":
     bRet = True;
-    options.verbosity and log(file.split(os.sep)[-1].decode('utf-8') + u'\n' + s.decode('utf-8'))
-    output.write(file.split(os.sep)[-1].decode('utf-8') + u'\n' + s.decode('utf-8') + u'\n')
+    options.verbosity and log(file.split(os.sep)[-1] + u'\n' + s)
+    output.write(file.split(os.sep)[-1] + u'\n' + s + u'\n')
   return bRet
 
 #args
@@ -115,6 +115,7 @@ try:
         l = 0
         for root, subdir, files in os.walk(path):
           if len(files) > 0:
+            root = root.decode('utf-8');
             header = u'location: ' + os.path.abspath(root).decode('utf-8')
             f.write(u'=' * len(header) + u'\n')
             f.write(header.decode('utf-8') + u'\n')
@@ -124,7 +125,7 @@ try:
             options.verbosity and log(u'#' * (len(header)))
             for file in sorted(files):
               if file.endswith(options.extensions):
-                if process(os.path.join(root, file), f):
+                if process(os.path.join(root, file.decode('utf-8')), f):
                   l += 1
                   f.write(u'----------------------\n')
                   options.verbosity and log(u'----------------------')
