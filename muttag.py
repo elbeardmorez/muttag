@@ -52,7 +52,7 @@ def optionsListCallback(option, opt, value, parser):
     setattr(optionParser.values, option.dest,
             map(lambda s: string.replace(s.rstrip(","), "\\,", ","), re.findall("(.*?[^\\\],|.+$)", value)))
 def optionsPathExpansionCallback(option, opt, value, parser):
-  setattr(optionParser.values, option.dest, os.path.expandvars(os.path.expanduser(value)).split(','))
+  setattr(optionParser.values, option.dest, os.path.expandvars(os.path.expanduser(value).split('|')))
 optionParser.add_option("-d", "--dir", metavar = "DIR",
                         type = "string", dest = "pathRoot", default = os.path.curdir,
                         action = "callback", callback = optionsPathExpansionCallback,
