@@ -129,10 +129,8 @@ try:
                   f.write(u'----------------------\n')
                   options.verbosity and log(u'----------------------')
 
-#  except Exception: pass
   except Exception as e:
     print e
   finally: f.close()
-#except Exception: pass
 except Exception as e:
   print e
