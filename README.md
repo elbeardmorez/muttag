@@ -36,7 +36,7 @@ Options:
 - no id3v1.1 support
 
 ### issues
-- some id3 frames (possible id3v1.1) fail to read properly ('[unrepresentable data']). see [issue 98](http://code.google.com/p/mutagen/issues/detail?id=98)  (mutagen)
+- some id3 frames (possible id3v1.1) fail to read properly ('[unrepresentable data']). see mutagen [issue 98](https://github.com/quodlibet/mutagen/issues/98)
 
 ### todo
 - [add] support more formats..
