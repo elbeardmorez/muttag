@@ -6,12 +6,57 @@ import os
 import codecs
 import string
 import re
+import filecmp
 from optparse import OptionParser # deprecated
 
 #local
 import mutagen.mp3 as mp3
 import mutagen.id3 as id3
 import mutagen.oggvorbis as oggvorbis
+
+apictypes = {
+  0 : "Other",
+  1 : "32x32 pixels 'file icon' (PNG only)",
+  2 : "Other file icon",
+  3 : "Cover (front)",
+  4 : "Cover (back)",
+  5 : "Leaflet page",
+  6 : "Media (e.g. label side of CD)",
+  7 : "Lead artist/lead performer/soloist",
+  8 : "Artist/performer",
+  9 : "Conductor",
+  10 : "Band/Orchestra",
+  11 : "Composer",
+  12 : "Lyricist/text writer",
+  13 : "Recording Location",
+  14 : "During recording",
+  15 : "During performance",
+  16 : "Movie/video screen capture",
+  17 : "A bright coloured fish",
+  18 : "Illustration",
+  19 : "Band/artist logotype",
+  20 : "Publisher/Studio logotype"
+}
+
+def imagetype(type):
+  if type == "jpeg":
+    return "jpg"
+  else:
+    return type
+
+def apictype(type):
+  if type == 3:
+    return "front"
+  elif type == 4:
+    return "back"
+  elif type == 5:
+    return "leaflet"
+  elif type == 6:
+    return "media"
+  elif type >= 0 and type <= len(apictypes):
+    return apictypes[type]
+  else:
+    return "unknown"
 
 def log(arg, file = 1):
   if file == 1:
@@ -33,13 +78,70 @@ def info(file):
   finally: f.close()
   return s
 
+def art(file):
+  options.verbosity > 2 and log("[debug art]")
+
+  s = ""
+  if not re.match(".*mp3$", file):
+    return s
+
+  try:
+    tag = id3.ID3()
+    tag.load(file, translate = True) # force id3 v2.4 translation
+    s = tag.pprint()
+    for frame in tag.getall('APIC'):
+      fPath = os.path.dirname(file)
+      fName = apictype(frame.type)
+      fType = imagetype(frame.mime.split(u'/')[1])
+      fPathFile = fPath + os.sep + fName + u'.' + fType
+      l = 0
+      if os.path.exists(fPathFile):
+        l = 2
+        while os.path.exists(fPath + os.sep + fName + str(l) + u'.' + fType):
+          l += 1
+        fPathFile = fPath + os.sep + fName + str(l) + u'.' + fType
+      f = os.open(fPathFile, os.O_CREAT + os.O_WRONLY)
+      try:
+        os.ftruncate(f, 0)
+        f = os.fdopen(f, 'w')
+        f.write(frame.data)
+      except Exception: pass
+      finally: f.close()
+      # remove if dupe
+      if l > 0:
+        if filecmp.cmp(fPathFile, fPath + os.sep + fName + u'.' + fType):
+          log(u'[debug] deleting duplicate image')
+          os.remove(fPathFile)
+        else:
+          for ll in range(2, l):
+            if filecmp.cmp(fPathFile, fPath + os.sep + fName + str(ll) + u'.' + fType):
+              log(u'[debug] deleting duplicate image')
+              os.remove(fPathFile)
+              break
+  except: pass
+  return s
+
 def process(file, output):
   bRet = None
+
+  # info
   s = info(file)
   if s and s != "":
     bRet = True;
     options.verbosity and log(file.split(os.sep)[-1] + u'\n' + s)
     output.write(file.split(os.sep)[-1] + u'\n' + s + u'\n')
+
+  # album art
+  if options.extractart:
+    s = file.split(os.sep)[-1].decode('utf-8')
+    if art(file):
+      s = s + u'\n' "album art extracted successfully"
+    else:
+      s = s + u'\n' "album art extraction failed"
+    options.verbosity and log(s.decode('utf-8'))
+    output.write(s.decode('utf-8') + u'\n')
+    bRet = True
+
   return bRet
 
 #args
@@ -60,6 +162,10 @@ optionParser.add_option("-f", "--files", metavar = "FILES",
                         type = "string", dest = "pathFiles", default = "",
                         action = "callback", callback = optionsPathExpansionCallback,
                         help = "comma-delimited list of absolute or 'pathRoot'-relative music files/paths")
+optionParser.add_option("-a", "--extract-art",
+                        dest = "extractart", default = False,
+                        action = "store_true",
+                        help = "extract album art [mp3 support only]"),
 optionParser.add_option("-o", "--output-info", metavar = "OUTPUT",
                         type = "string", dest = "output", default = "./muttag.info",
                         help = "set OUTPUT as target to dump all tag info to")
